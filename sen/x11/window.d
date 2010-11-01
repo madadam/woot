@@ -7,8 +7,6 @@ import std.exception;
 
 struct Window {
   void initialize(sen.window.Window window) {
-    checkXRenderExtension();
-
     auto visualInfo = findVisual();
     auto rootWindow = RootWindow(display, visualInfo.screen);
 
@@ -160,15 +158,9 @@ struct Window {
 
   // system initialization
 
-  private void checkXRenderExtension() {
-    int eventBase, errorBase;
-
-    auto enabled = XRenderQueryExtension(display, &eventBase, &errorBase);
-    enforce(enabled, "No RENDER extension found.");
-  }
-
   private glx.XVisualInfo* findVisual() {
     // TODO: fallback to a non-alpha one, if alpha not available.
+    checkXRenderExtension();
 
     auto screen = DefaultScreen(display);
 
@@ -192,6 +184,13 @@ struct Window {
     enforce(visualInfo, "No suitable visual found.");
 
     return visualInfo;
+  }
+
+  private void checkXRenderExtension() {
+    int eventBase, errorBase;
+
+    auto enabled = XRenderQueryExtension(display, &eventBase, &errorBase);
+    enforce(enabled, "No RENDER extension found.");
   }
 
   private glx.XVisualInfo* findVisualWithAlpha(GLXFBConfig[] configs) {

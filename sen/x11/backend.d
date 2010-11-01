@@ -27,7 +27,7 @@ void processEvent() {
       break;
     case Expose:
       if (event.xexpose.count == 0) {
-        target.requestPaint();
+        target.paint();
       }
       break;
     case KeyPress:

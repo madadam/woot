@@ -2,17 +2,20 @@ module sen.window;
 
 import sen.application;
 static import sen.backend;
+import sen.event;
 
 class Window {
+  Event!() keyPressed;
+  Event!() paintRequested;
+  Event!() resized;
+
   this() {
     handle.initialize(this);
     registerWindow(this);
 
-    glShadeModel(GL_SMOOTH);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    initializeStage();
 
-    backgroundColor = [1.0, 1.0, 1.0, 1.0];
+    resized.connect(&prepareStage);
   }
 
   ~this() {
@@ -83,41 +86,35 @@ class Window {
 
   // rendering
 
-  void requestPaint() {
-    paint();
+  void paint() {
+    clear();
+    paintRequested();
+    swapBuffers();
   }
 
-  private void paint() {
+  private void clear() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glLoadIdentity();
-    glBegin(GL_TRIANGLES);
-      glColor4f(1.0, 0.0, 0.0, 0.1);
-      glVertex2f(0.1, 0.1);
-
-      glColor4f(0.0, 1.0, 0.0, 0.1);
-      glVertex2f(0.9, 0.1);
-
-      glColor4f(0.0, 0.0, 1.0, 0.1);
-      glVertex2f(0.5, 0.9);
-    glEnd();
-
-    swapBuffers();
   }
 
   private mixin delegateTo!("handle", "swapBuffers");
 
-  // event handlers
+  void initializeStage() {
+    glShadeModel(GL_SMOOTH);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  void resized() {
+    backgroundColor = [1.0, 1.0, 1.0, 1.0];
+  }
+
+  void prepareStage() {
     glViewport(0, 0, width, height);
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-    glMatrixMode(GL_MODELVIEW);
-  }
 
-  void keyPressed() {
-    close();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
   }
 
   // closing
