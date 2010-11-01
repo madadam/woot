@@ -1,4 +1,4 @@
-module sen.image;
+module woot.image;
 
 struct Image {
 }

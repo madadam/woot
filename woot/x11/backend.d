@@ -1,20 +1,20 @@
-module sen.x11.backend;
+module woot.x11.backend;
 
-public import sen.x11.system;
+public import woot.x11.system;
 
-import sen.log;
-import sen.window;
-import sen.x11.helpers;
-import sen.x11.window;
 import std.exception;
+import woot.log;
+import woot.window;
+import woot.x11.helpers;
+import woot.x11.window;
 
-alias sen.x11.window.Window Window;
+alias woot.x11.window.Window Window;
 
 void processEvent() {
   XEvent event;
   XNextEvent(display, &event);
 
-  auto target = getWindowProperty!(sen.window.Window)(event.xany.window, THIS);
+  auto target = getWindowProperty!(woot.window.Window)(event.xany.window, THIS);
 
   switch (event.type) {
     case ClientMessage:
@@ -55,8 +55,8 @@ package Atom UTF8_STRING;
 package Atom MOTIF_WM_HINTS;
 
 static this() {
-  ANY              = internAtom("sen:any",          false);
-  THIS             = internAtom("sen:this",         false);
+  ANY              = internAtom("_ANY",             false);
+  THIS             = internAtom("_THIS",            false);
   WM_DELETE_WINDOW = internAtom("WM_DELETE_WINDOW", true);
   NET_WM_NAME      = internAtom("_NET_WM_NAME",     true);
   UTF8_STRING      = internAtom("UTF8_STRING",      true);

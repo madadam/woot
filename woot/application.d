@@ -1,10 +1,10 @@
-module sen.application;
+module woot.application;
 
 public import derelict.opengl.gl;
 public import derelict.opengl.glu;
-static import backend = sen.backend;
-import sen.window;
 import std.algorithm;
+static import backend = woot.backend;
+import woot.window;
 
 // Run the application. This will spin the main event loop.
 void run() {

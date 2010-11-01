@@ -1,5 +1,5 @@
-import sen.application;
-import sen.window;
+import woot.application;
+import woot.window;
 
 void main() {
   auto window = new Window;

@@ -1,10 +1,10 @@
-module sen.x11.helpers;
+module woot.x11.helpers;
 
-import sen.log;
-import sen.x11.backend;
 import std.exception;
 import std.string;
 import std.traits;
+import woot.log;
+import woot.x11.backend;
 
 // setWindowProperty
 unittest {

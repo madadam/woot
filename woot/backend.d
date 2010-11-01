@@ -1,11 +1,11 @@
-module sen.backend;
+module woot.backend;
 
 // Load a backend depending on the target platform.
 
 version(linux) { version = x11; }
 
 version(x11) {
-  public import sen.x11.backend;
+  public import woot.x11.backend;
 
   // TODO: support macos, win32, ios, android, ...
 

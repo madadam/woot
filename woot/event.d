@@ -1,4 +1,4 @@
-module sen.event;
+module woot.event;
 
 import std.algorithm;
 

@@ -1,12 +1,12 @@
-module sen.x11.window;
+module woot.x11.window;
 
-import sen.log;
-import sen.x11.backend;
-import sen.x11.helpers;
 import std.exception;
+import woot.log;
+import woot.x11.backend;
+import woot.x11.helpers;
 
 struct Window {
-  void initialize(sen.window.Window window) {
+  void initialize(woot.window.Window window) {
     auto visualInfo = findVisual();
     auto rootWindow = RootWindow(display, visualInfo.screen);
 

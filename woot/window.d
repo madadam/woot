@@ -1,8 +1,8 @@
-module sen.window;
+module woot.window;
 
-import sen.application;
-static import sen.backend;
-import sen.event;
+import woot.application;
+static import woot.backend;
+import woot.event;
 
 class Window {
   Event!() keyPressed;
@@ -130,7 +130,7 @@ class Window {
 
   private float[4] _backgroundColor;
 
-  private sen.backend.Window handle;
+  private woot.backend.Window handle;
 }
 
 // TODO: make this more robust and extract it into separate library.

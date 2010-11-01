@@ -1,4 +1,4 @@
-module sen.x11.system;
+module woot.x11.system;
 
 public import derelict.opengl.glx;
 public import X11.Xlib;

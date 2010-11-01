@@ -1,4 +1,4 @@
-module sen.log;
+module woot.log;
 
 import std.stdio;
 
