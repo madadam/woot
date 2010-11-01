@@ -2,6 +2,7 @@ module sen.x11.backend;
 
 public import sen.x11.system;
 
+import sen.log;
 import sen.window;
 import sen.x11.helpers;
 import sen.x11.window;
@@ -13,13 +14,16 @@ void processEvent() {
   XEvent event;
   XNextEvent(display, &event);
 
-  auto target = getWindowProperty!(sen.window.Window)(event.xany.window, _THIS);
+  auto target = getWindowProperty!(sen.window.Window)(event.xany.window, THIS);
 
   switch (event.type) {
     case ClientMessage:
-      if (target && event.xclient.l[0] == _WM_DELETE_WINDOW) {
+      if (target && event.xclient.l[0] == WM_DELETE_WINDOW) {
         target.requestClose();
       }
+      break;
+    case ConfigureNotify:
+      target.resized();
       break;
     case Expose:
       if (event.xexpose.count == 0) {
@@ -28,6 +32,7 @@ void processEvent() {
       break;
     case KeyPress:
       // target.keyPressed(findKey(event.xkey.keycode));
+      target.keyPressed();
       break;
     default:
   }
@@ -42,14 +47,18 @@ static this() {
 }
 
 // Atoms
-package Atom _ANY;
-package Atom _THIS;
-package Atom _WM_DELETE_WINDOW;
+package Atom ANY;
+package Atom THIS;
+package Atom WM_DELETE_WINDOW;
+package Atom NET_WM_NAME;
+package Atom UTF8_STRING;
+package Atom MOTIF_WM_HINTS;
 
 static this() {
-  _ANY              = internAtom("sen:any",  false);
-  _THIS             = internAtom("sen:this", false);
-  _WM_DELETE_WINDOW = internAtom("WM_DELETE_WINDOW", true);
+  ANY              = internAtom("sen:any",          false);
+  THIS             = internAtom("sen:this",         false);
+  WM_DELETE_WINDOW = internAtom("WM_DELETE_WINDOW", true);
+  NET_WM_NAME      = internAtom("_NET_WM_NAME",     true);
+  UTF8_STRING      = internAtom("UTF8_STRING",      true);
+  MOTIF_WM_HINTS   = internAtom("_MOTIF_WM_HINTS",  true);
 }
-
-// Make derelict play nice with Xlib

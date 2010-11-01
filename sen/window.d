@@ -9,64 +9,120 @@ class Window {
     registerWindow(this);
 
     glShadeModel(GL_SMOOTH);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    backgroundColor = [1.0, 1.0, 1.0, 1.0];
   }
 
   ~this() {
     close();
   }
 
+  // visibility
+
   void show() {
     handle.show();
+    resized();
   }
 
-  void hide() {
-    handle.hide();
-  }
+  mixin delegateTo!("handle", "hide");
+
+  // window title
 
   @property
   string title() {
-    return "";
+    return handle.title();
   }
 
   @property
   string title(string value) {
-    return "";
+    return handle.title(value);
   }
+
+  // background
+
+  @property
+  float[4] backgroundColor(float[4] value) {
+    _backgroundColor = value;
+
+    // TODO: value.tupleof would be handy here, sadly, does not work with arrays.
+    glClearColor(value[0], value[1], value[2], value[3]);
+
+    // TODO: damage
+
+    return value;
+  }
+
+  // geometry
+
+  @property
+  int width() {
+    return handle.width();
+  }
+
+  @property
+  int width(int value) {
+    return handle.width(value);
+  }
+
+  @property
+  int height() {
+    return handle.height();
+  }
+
+  @property
+  int height(int value) {
+    return handle.height(value);
+  }
+
+  // decorations
+
+  mixin delegateTo!("handle", "showDecorations");
+  mixin delegateTo!("handle", "hideDecorations");
+
+  // rendering
 
   void requestPaint() {
     paint();
   }
 
-  void paint() {
+  private void paint() {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     glBegin(GL_TRIANGLES);
-      glVertex2f(10.0, 10.0);
-      glVertex2f(90.0, 10.0);
-      glVertex2f(50.0, 90.0);
+      glColor4f(1.0, 0.0, 0.0, 0.1);
+      glVertex2f(0.1, 0.1);
+
+      glColor4f(0.0, 1.0, 0.0, 0.1);
+      glVertex2f(0.9, 0.1);
+
+      glColor4f(0.0, 0.0, 1.0, 0.1);
+      glVertex2f(0.5, 0.9);
     glEnd();
 
     swapBuffers();
   }
 
-  void swapBuffers() {
-    handle.swapBuffers();
-  }
+  private mixin delegateTo!("handle", "swapBuffers");
 
-  void resize() {
-    glViewport(0, 0, 100, 100);
+  // event handlers
+
+  void resized() {
+    glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, 100.0, 0.0, 100.0);
+    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
     glMatrixMode(GL_MODELVIEW);
   }
 
-  void requestClose() {
+  void keyPressed() {
     close();
   }
 
-  void keyPressed() {
+  // closing
+
+  void requestClose() {
     close();
   }
 
@@ -75,5 +131,12 @@ class Window {
     handle.destroy();
   }
 
+  private float[4] _backgroundColor;
+
   private sen.backend.Window handle;
+}
+
+// TODO: make this more robust and extract it into separate library.
+private mixin template delegateTo(string target, string name) {
+  mixin("void " ~ name ~ "() { " ~ target ~ "." ~ name ~ "(); }");
 }

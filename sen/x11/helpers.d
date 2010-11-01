@@ -1,8 +1,10 @@
 module sen.x11.helpers;
 
+import sen.log;
 import sen.x11.backend;
 import std.exception;
 import std.string;
+import std.traits;
 
 // setWindowProperty
 unittest {
@@ -10,42 +12,54 @@ unittest {
                                     0, 0, 100, 100, 0, 0, 0);
   scope(exit) { XDestroyWindow(display, window); }
 
-  class Stuff {};
+  class  Stuff {}
+  struct Point { int x; int y; }
 
-  auto atom = XInternAtom(display, "test", false);
+  auto atom = internAtom("test", false);
+
+  // Set/get pointers
   auto value = new Stuff;
-
-  // Set property can be got back.
   setWindowProperty(window, atom, &value);
   assert(value == getWindowProperty!Stuff(window, atom));
 
-  // Default value is returned of proterty is deleted.
+  // Set/get strings
+  setWindowProperty(window, atom, "hello world");
+  assert("hello world" == getWindowProperty!string(window, atom));
+
+  // Set/get plain values
+  auto point = Point(123, 456);
+  setWindowProperty(window, atom, point);
+  assert(Point(123, 456) == getWindowProperty!Point(window, atom));
+
+  // Default value is returned if proterty is deleted.
   XDeleteProperty(display, window, atom);
   assert(getWindowProperty!Stuff(window, atom) is null);
 }
 
 void setWindowProperty(T)(X11.Xlib.Window handle, Atom name, T value) {
-  XChangeProperty(display,
-                  handle,
-                  name,
-                  _ANY,
-                  8,
-                  PropModeReplace,
-                  cast(ubyte*) value,
-                  T.sizeof);
+  // TODO: Generalize the string case to any array.
+
+  static if (is(T == string)) {
+    auto type = UTF8_STRING;
+    auto data  = cast(ubyte*) value.ptr;
+    auto size = value.length * char.sizeof;
+  } else {
+    auto type = ANY;
+    auto size = T.sizeof;
+
+    static if (isPointer!T) {
+      auto data = cast(ubyte*) value;
+    } else {
+      auto data = cast(ubyte*) &value;
+    }
+  }
+
+  XChangeProperty(display, handle, name, type, 8, PropModeReplace, data, size);
 }
 
-// Read a value from a raw byte array.
-private T read(T)(const ubyte* data) {
-  union Convertor {
-    ubyte[T.sizeof] bytes;
-    T               value;
-  };
-
-  Convertor convertor;
-
-  convertor.bytes = data[0 .. T.sizeof];
-  return convertor.value;
+// Low-level style.
+void setWindowProperty(T)(X11.Xlib.Window handle, Atom name, Atom type, T value, int format, int numElements) {
+  XChangeProperty(display, handle, name, type, format, PropModeReplace, cast(ubyte*) &value, numElements);
 }
 
 // getWindowProperty
@@ -57,26 +71,29 @@ T getWindowProperty(T)(X11.Xlib.Window handle, Atom name) {
   Atom actualType;
   uint ignoredBytesAfter;
 
-  XGetWindowProperty(display,
-                     handle,
-                     name,
-                     0,
-                     cast(int) T.sizeof / 4,
-                     cast(Bool) false,
-                     AnyPropertyType,
-                     &actualType,
-                     &format,
-                     &numItems,
-                     &ignoredBytesAfter,
-                     &bytes);
+  XGetWindowProperty(display, handle, name, 0, int.max, cast(Bool) false, AnyPropertyType,
+                     &actualType, &format, &numItems, &ignoredBytesAfter, &bytes);
 
   if (actualType == None && format == 0) {
     return T.init;
   } else {
-    enforce(T.sizeof == (numItems * format) / 8, "Invalid property type");
+    auto actualSize = (numItems * format) / 8;
+
+    // TODO: Generalize the string case to any array.
+
+    static if (is(T == string)) {
+      enforce(UTF8_STRING == actualType, "Invlaid property type");
+    } else {
+      enforce(T.sizeof == actualSize, "Invalid property type");
+    }
+
     scope(exit) { XFree(bytes); }
 
-    return read!T(bytes);
+    static if (is(T == string)) {
+      return cast(string) bytes[0 .. actualSize].dup;
+    } else {
+      return *(cast(T*) bytes);
+    }
   }
 }
 
