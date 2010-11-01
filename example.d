@@ -1,6 +1,5 @@
 import sen.application;
 import sen.window;
-import sen.log;
 
 void main() {
   auto window = new Window;

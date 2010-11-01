@@ -1,4 +1,4 @@
-PROGRAM = hack
+PROGRAM = example
 
 COMMON_DFLAGS  = -I~/include
 DEBUG_DFLAGS   = $(COMMON_DFLAGS) -w -wi
@@ -11,13 +11,13 @@ DFLAGS = $(DEBUG_DFLAGS)
 endif
 
 build:
-	rdmd --build-only -of$(PROGRAM) $(DFLAGS) main.d
+	rdmd --build-only -of$(PROGRAM) $(DFLAGS) example.d
 
 run: build
 	./$(PROGRAM)
 
 test:
-	rdmd -unittest $(DFLAGS) main.d
+	rdmd -unittest $(DFLAGS) example.d
 
 clean:
 	rm -f *.o
