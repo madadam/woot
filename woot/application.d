@@ -1,7 +1,5 @@
 module woot.application;
 
-public import derelict.opengl.gl;
-public import derelict.opengl.glu;
 import std.algorithm;
 static import backend = woot.backend;
 import woot.window;
@@ -48,9 +46,3 @@ private void closeAllWindows() {
 
 private bool running = false;
 private Window[] windows;
-
-// Load dynamic libs.
-static this() {
-  DerelictGL.load();
-  DerelictGLU.load();
-}

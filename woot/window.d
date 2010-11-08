@@ -1,21 +1,33 @@
 module woot.window;
 
+import meta.attribute;
 import woot.application;
-static import woot.backend;
+import woot.color;
+import woot.composite;
 import woot.event;
+import woot.graphics;
+import woot.widget;
 
-class Window {
+static import woot.backend;
+
+class Window : Compositable {
   Event!() keyPressed;
   Event!() paintRequested;
   Event!() resized;
+
+  mixin Composite;
 
   this() {
     handle.initialize(this);
     registerWindow(this);
 
-    initializeStage();
+    resized.connect(&setProjection);
 
-    resized.connect(&prepareStage);
+    glShadeModel(GL_SMOOTH);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    backgroundColor = white;
   }
 
   ~this() {
@@ -45,12 +57,12 @@ class Window {
 
   // background
 
-  @property
-  float[4] backgroundColor(float[4] value) {
-    _backgroundColor = value;
+  mixin(attributeReader!(Color, "backgroundColor"));
 
-    // TODO: value.tupleof would be handy here, sadly, does not work with arrays.
-    glClearColor(value[0], value[1], value[2], value[3]);
+  @property
+  Color backgroundColor(in Color value) {
+    _backgroundColor = value;
+    glClearColor(value.tupleof);
 
     // TODO: damage
 
@@ -88,6 +100,7 @@ class Window {
 
   void paint() {
     clear();
+    paintChildren();
     paintRequested();
     swapBuffers();
   }
@@ -96,22 +109,26 @@ class Window {
     glClear(GL_COLOR_BUFFER_BIT);
   }
 
-  private mixin delegateTo!("handle", "swapBuffers");
+  private void paintChildren() {
+    foreach(child; children) {
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      glTranslated(child.x, child.y, 0.0);
 
-  void initializeStage() {
-    glShadeModel(GL_SMOOTH);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      child.paint();
 
-    backgroundColor = [1.0, 1.0, 1.0, 1.0];
+      glPopMatrix();
+    }
   }
 
-  void prepareStage() {
+  private mixin delegateTo!("handle", "swapBuffers");
+
+  private void setProjection() {
     glViewport(0, 0, width, height);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+    gluOrtho2D(0.0, width, 0.0, height);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -127,8 +144,6 @@ class Window {
     unregisterWindow(this);
     handle.destroy();
   }
-
-  private float[4] _backgroundColor;
 
   private woot.backend.Window handle;
 }
