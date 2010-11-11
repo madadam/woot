@@ -10,6 +10,8 @@ import std.algorithm;
 struct Event(T...) {
   alias void delegate(T) Listener;
 
+  @disable void opAssign(Event!T);
+
   void connect(Listener listener) {
     listeners ~= listener;
   }
@@ -26,7 +28,7 @@ struct Event(T...) {
     listeners = [];
   }
 
-  void opCall(T params) {
+  void trigger(T params) {
     foreach(listener; listeners) {
       listener(params);
     }
@@ -52,7 +54,7 @@ unittest {
   clearCalls();
   Event!() e;
 
-  e();
+  e.trigger();
   assert([] == calls);
 }
 
@@ -63,10 +65,10 @@ unittest {
   Event!() e;
   e.connect({ call("one"); });
 
-  e();
+  e.trigger();
   assert(["one"] == calls);
 
-  e();
+  e.trigger();
   assert(["one", "one"] == calls);
 }
 
@@ -77,10 +79,10 @@ unittest {
   Event!string e1;
   e1.connect((string s) { call(s); });
 
-  e1("one");
+  e1.trigger("one");
   assert(["one"] == calls);
 
-  e1("two");
+  e1.trigger("two");
   assert(["one", "two"] == calls);
 
   clearCalls();
@@ -88,10 +90,10 @@ unittest {
   Event!(string, string) e2;
   e2.connect((string a, string b) { call(a ~ "+" ~ b); });
 
-  e2("one", "two");
+  e2.trigger("one", "two");
   assert(["one+two"] == calls);
 
-  e2("three", "four");
+  e2.trigger("three", "four");
   assert(["one+two", "three+four"] == calls);
 }
 
@@ -103,10 +105,10 @@ unittest {
   e.connect({ call("one"); });
   e.connect({ call("two"); });
 
-  e();
+  e.trigger();
   assert(["one", "two"] == calls);
 
-  e();
+  e.trigger();
   assert(["one", "two", "one", "two"] == calls);
 }
 
@@ -119,7 +121,7 @@ unittest {
 
   e.connect(listener);
   e.disconnect(listener);
-  e();
+  e.trigger();
   assert([] == calls);
 }
 
@@ -132,6 +134,37 @@ unittest {
   e.connect({ call("two"); });
 
   e.disconnectAll();
-  e();
+  e.trigger();
   assert([] == calls);
+}
+
+/**
+ * Mix-in an event into a class/struct:
+ *
+ * Examples:
+ * ----------------
+ * class Button {
+ *   mixin(event!("clicked"));
+ * }
+ * ----------------
+ **/
+pure string event(string name, T...)() {
+  auto type = "Event!" ~ T.stringof;
+
+  return "@property ref " ~ type ~ " " ~ name ~ "() { return _" ~ name ~ "; }" ~
+         "private " ~ type ~ " _" ~ name ~ ";";
+}
+
+unittest {
+  clearCalls();
+
+  class Widget {
+    mixin(event!"clicked");
+  }
+
+  auto widget = new Widget;
+  widget.clicked.connect({ call("click"); });
+
+  widget.clicked.trigger();
+  assert(["click"] == calls);
 }

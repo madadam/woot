@@ -1,16 +1,15 @@
 module woot.widget;
 
-import meta.attribute;
+import meta.accessor;
 import woot.color;
 import woot.event;
-import woot.graphics;
-import woot.log;
+import woot.graphics.setup;
 
 class Widget {
-  Event!() paintRequested;
+  mixin(event!("paintRequested"));
 
-  mixin(attributeAccessor!(double, "x", "y", "width", "height"));
-  mixin(attributeAccessor!(Color, "backgroundColor"));
+  mixin(accessor!(double, "x", "y", "width", "height"));
+  mixin(accessor!(Color, "backgroundColor"));
 
   @property {
     double[2] position() {
@@ -38,7 +37,7 @@ class Widget {
 
   void paint() {
     paintBackground();
-    paintRequested();
+    paintRequested.trigger();
   }
 
   protected void paintBackground() {

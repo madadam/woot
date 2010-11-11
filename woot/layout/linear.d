@@ -1,14 +1,15 @@
 module woot.layout.linear;
 
-import meta.attribute;
+import meta.accessor;
 import woot.layout.base;
+import woot.log;
 import woot.widget;
 
 /**
  * Abstract class that lays out the widget in line - either horizontal or vertical.
  **/
 class LinearLayout : Layout {
-  mixin(attributeAccessor!(double, "spacing"));
+  mixin(accessor!(double, "spacing"));
 
   override void apply() {
     auto n         = widget.children.length;

@@ -1,22 +1,18 @@
 module woot.window;
 
-import meta.attribute;
+import meta.accessor;
+import std.algorithm;
+import std.math : round;
 import woot.application;
 import woot.color;
-import woot.composite;
 import woot.event;
-import woot.graphics;
+import woot.graphics.setup;
+import woot.layout.container;
 import woot.widget;
 
 static import woot.backend;
 
-class Window : Compositable {
-  Event!() keyPressed;
-  Event!() paintRequested;
-  Event!() resized;
-
-  mixin Composite;
-
+class Window : Container {
   this() {
     handle.initialize(this);
     registerWindow(this);
@@ -34,14 +30,19 @@ class Window : Compositable {
     close();
   }
 
+  // events
+  mixin(event!"keyPressed");
+  mixin(event!"paintRequested");
+  mixin(event!"resized");
+
   // visibility
 
   void show() {
     handle.show();
-    resized();
+    resized.trigger();
   }
 
-  mixin delegateTo!("handle", "hide");
+  mixin(delegateTo!("handle", "hide"));
 
   // window title
 
@@ -57,7 +58,7 @@ class Window : Compositable {
 
   // background
 
-  mixin(attributeReader!(Color, "backgroundColor"));
+  mixin(getter!(Color, "backgroundColor"));
 
   @property
   Color backgroundColor(in Color value) {
@@ -72,36 +73,36 @@ class Window : Compositable {
   // geometry
 
   @property
-  int width() {
+  double width() {
     return handle.width();
   }
 
   @property
-  int width(int value) {
+  double width(double value) {
     return handle.width(value);
   }
 
   @property
-  int height() {
+  double height() {
     return handle.height();
   }
 
   @property
-  int height(int value) {
+  double height(double value) {
     return handle.height(value);
   }
 
   // decorations
 
-  mixin delegateTo!("handle", "showDecorations");
-  mixin delegateTo!("handle", "hideDecorations");
+  mixin(delegateTo!("handle", "showDecorations"));
+  mixin(delegateTo!("handle", "hideDecorations"));
 
   // rendering
 
   void paint() {
     clear();
     paintChildren();
-    paintRequested();
+    paintRequested.trigger();
     swapBuffers();
   }
 
@@ -121,10 +122,10 @@ class Window : Compositable {
     }
   }
 
-  private mixin delegateTo!("handle", "swapBuffers");
+  private mixin(delegateTo!("handle", "swapBuffers"));
 
   private void setProjection() {
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, cast(int) round(width), cast(int) round(height));
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -145,10 +146,34 @@ class Window : Compositable {
     handle.destroy();
   }
 
+  // children
+
+  void add(Widget[] widgets...) {
+    foreach(widget; widgets) {
+      _children ~= widget;
+    }
+  }
+
+  void remove(Widget[] widgets...) {
+    // TODO: Optimize, if possible.
+    foreach(widget; widgets) {
+      auto index = indexOf(_children, widget);
+
+      if (index >= 0) {
+        _children = std.algorithm.remove!(SwapStrategy.stable)(_children, index);
+      }
+    }
+  }
+
+  Widget[] children() {
+    return _children;
+  }
+
+  private Widget[] _children;
   private woot.backend.Window handle;
 }
 
 // TODO: make this more robust and extract it into separate library.
-private mixin template delegateTo(string target, string name) {
-  mixin("void " ~ name ~ "() { " ~ target ~ "." ~ name ~ "(); }");
+private pure string delegateTo(string target, string name)() {
+  return "void " ~ name ~ "() { " ~ target ~ "." ~ name ~ "(); }";
 }

@@ -1,6 +1,7 @@
 module woot.x11.window;
 
 import std.exception;
+import std.math;
 import woot.log;
 import woot.x11.backend;
 import woot.x11.helpers;
@@ -79,41 +80,41 @@ struct Window {
   // geometry
 
   @property
-  int width() {
+  double width() {
     return geometry[2];
   }
 
   @property
-  int width(int value) {
+  double width(double value) {
     XWindowChanges changes;
-    changes.width = value;
+    changes.width = cast(int) round(value);
 
     XConfigureWindow(display, handle, CWWidth, &changes);
     return value;
   }
 
   @property
-  int height() {
+  double height() {
     return geometry[3];
   }
 
   @property
-  int height(int value) {
+  double height(double value) {
     XWindowChanges changes;
-    changes.height = value;
+    changes.height = cast(int) round(value);
 
     XConfigureWindow(display, handle, CWHeight, &changes);
     return value;
   }
 
   @property
-  int[2] size() {
+  double[2] size() {
     auto geometry = this.geometry;
     return [geometry[2], geometry[3]];
   }
 
   @property
-  int[4] geometry() {
+  double[4] geometry() {
     xlib.Window ignoredRoot;
     uint        ignoredStuff;
     int[4]      result;
@@ -122,7 +123,10 @@ struct Window {
                  &result[0], &result[1], cast(uint*) &result[2], cast(uint*) &result[3],
                  &ignoredStuff, &ignoredStuff);
 
-    return result;
+    return [cast(double) result[0],
+            cast(double) result[1],
+            cast(double) result[2],
+            cast(double) result[3]];
   }
 
   // title

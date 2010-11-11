@@ -23,7 +23,7 @@ void processEvent() {
       }
       break;
     case ConfigureNotify:
-      target.resized();
+      target.resized.trigger();
       break;
     case Expose:
       if (event.xexpose.count == 0) {
@@ -32,7 +32,7 @@ void processEvent() {
       break;
     case KeyPress:
       // target.keyPressed(findKey(event.xkey.keycode));
-      target.keyPressed();
+      target.keyPressed.trigger();
       break;
     default:
   }
