@@ -2,8 +2,23 @@ module woot.graphics.image;
 
 import meta.accessor;
 import std.exception;
+import std.file;
 import std.string;
 public import woot.graphics.setup;
+
+/// Exception thrown when file is not found.
+class FileNotFound : FileException {
+  this(string message) { super(message); }
+}
+
+/**
+ * Exception thrown on attempt to open unknown image type.
+ *
+ * Supported image types can be found here: http://openil.sourceforge.net/features.php
+ */
+class UnknownImageType : Exception {
+  this(string message) { super(message); }
+}
 
 class Image {
   this(string path) {
@@ -19,7 +34,18 @@ class Image {
     ilBindImage(image);
 
     ilLoadImage(toStringz(path));
-    enforce(ilGetError() == IL_NO_ERROR, "Failed to load image " ~ path);
+    auto error = ilGetError();
+
+    switch (error) {
+      case IL_NO_ERROR:
+        break; // OK
+      case IL_COULD_NOT_OPEN_FILE:
+        throw new FileNotFound("File " ~ path ~ " was not found");
+      case IL_INVALID_EXTENSION:
+        throw new UnknownImageType("Unknown image type in file " ~ path);
+      default:
+        throw new Exception(format(iluErrorString(error)));
+    }
 
     _width  = ilGetInteger(IL_IMAGE_WIDTH);
     _height = ilGetInteger(IL_IMAGE_HEIGHT);
@@ -31,15 +57,21 @@ class Image {
   private uint id;
 }
 
-void paint(Image image) {
+/// Render image.
+void image(Image source) {
+  image(source, source.width, source.height);
+}
+
+/// Render image with given with and height.
+void image(Image source, double width, double height) {
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, image.id);
+  glBindTexture(GL_TEXTURE_2D, source.id);
 
   glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0); glVertex2f(0.0,         0.0);
-		glTexCoord2f(1.0, 0.0); glVertex2f(image.width, 0.0);
-		glTexCoord2f(1.0, 1.0); glVertex2f(image.width, image.height);
-		glTexCoord2f(0.0, 1.0); glVertex2f(0.0,         image.height);
+    glTexCoord2f(0.0, 0.0); glVertex2d(0.0,   0.0);
+		glTexCoord2f(1.0, 0.0); glVertex2d(width, 0.0);
+		glTexCoord2f(1.0, 1.0); glVertex2d(width, height);
+		glTexCoord2f(0.0, 1.0); glVertex2d(0.0,   height);
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
