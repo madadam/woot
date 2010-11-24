@@ -18,7 +18,9 @@ void main(string[] args) {
   try {
     auto window = new Window;
     // auto img    = new Image(args[1]);
-    auto font   = new Font("/usr/share/fonts/TTF/DejaVuSans.ttf", 30);
+
+    auto sample = "Příliš žluťoučký kůň úpěl ďábelské ódy";
+    auto font = new Font("/usr/share/fonts/TTF/DejaVuSans.ttf", 10);
 
     window.paintRequested.connect({
       // image(img);
@@ -29,7 +31,7 @@ void main(string[] args) {
       glTranslatef(50.0, 50.0, 0.0);
       glColor3f(0.0, 0.0, 0.0);
 
-      text("Hello world", font);
+      text(sample, font);
 
       glPopMatrix();
     });

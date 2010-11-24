@@ -59,6 +59,12 @@ class Font {
 
 struct Glyph {
   mixin(getter!(int, "advanceX", "advanceY"));
+  mixin(getter!(uint, "width", "height"));
+
+  mixin(getter!(int, "left", "bottom"));
+
+  @property int right() const { return left + width; }
+  @property int top() const   { return bottom + height; }
 
   private void bake(FT_Face face, uint index) {
     FT_Error error;
@@ -66,27 +72,31 @@ struct Glyph {
     error = FT_Load_Glyph(face, index, FT_LOAD_RENDER);
     enforce(error == 0, "Failed to load glyph");
 
+    auto glyph = face.glyph;
+
     ubyte[] data;
 
-    prepareBitmap(face.glyph.bitmap, _textureWidth, _textureHeight, data);
+    prepareBitmap(glyph.bitmap, _width, _height, data);
 
     glGenTextures(1, &_textureId);
 
     bindTexture();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureWidth, textureHeight, 0, GL_ALPHA,
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA,
                  GL_UNSIGNED_BYTE, cast(void*) data.ptr);
 
-    _advanceX = face.glyph.advance.x / 64;
-    _advanceY = face.glyph.advance.y / 64;
+    _advanceX = glyph.advance.x / 64;
+    _advanceY = glyph.advance.y / 64;
+
+    _left     = glyph.bitmap_left;
+    _bottom   = glyph.bitmap_top - glyph.bitmap.rows;
   }
 
   private void bindTexture() const {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, _textureId);
   }
-
-  private { mixin(getter!(uint, "textureWidth", "textureHeight")); }
 
   private uint _textureId;
 }
@@ -113,18 +123,23 @@ private void renderGlyph(ref const Glyph g, double x, double y) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+  auto left   = x + g.left;
+  auto right  = x + g.right;
+  auto bottom = y + g.bottom;
+  auto top    = y + g.top;
+
   glBegin(GL_QUADS);
     glTexCoord2f(0.0, 1.0);
-    glVertex2d(x, y);
+    glVertex2d(left, bottom);
 
     glTexCoord2f(1.0, 1.0);
-    glVertex2d(x + g.textureWidth, y);
+    glVertex2d(right, bottom);
 
     glTexCoord2f(1.0, 0.0);
-    glVertex2d(x + g.textureWidth, y + g.textureHeight);
+    glVertex2d(right, top);
 
     glTexCoord2f(0.0, 0.0);
-    glVertex2d(x, y + g.textureHeight);
+    glVertex2d(left, top);
   glEnd();
 }
 
