@@ -19,8 +19,8 @@ void main(string[] args) {
     auto window = new Window;
     // auto img    = new Image(args[1]);
 
-    auto sample = "Příliš žluťoučký kůň úpěl ďábelské ódy";
-    auto font = new Font("/usr/share/fonts/TTF/DejaVuSans.ttf", 10);
+    auto sample = "Příliš žluťoučký kůň úpěl ďábelské ódy RAVE T.";
+    auto font   = new Font("/usr/share/fonts/TTF/DejaVuSans.ttf", 16);
 
     window.paintRequested.connect({
       // image(img);

@@ -8,9 +8,6 @@ import std.utf;
 
 /**
  * Returns a range that efficiently iterates over a string yielding UTF32 characters.
- *
- * TODO: There is byDChar function in the std.string module seemingly doing the same thing.
- *
  */
 Chars chars(string input) { return Chars(input); }
 
@@ -44,6 +41,13 @@ private struct Chars {
 
   void popFront() {
     index += stride(input, index);
+  }
+
+  /// Return first char, then pop it.
+  dchar popAndReturnFront() {
+    auto result = front;
+    popFront();
+    return result;
   }
 
   @property

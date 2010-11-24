@@ -5,6 +5,7 @@ import derelict.freetype.ft;
 import meta.accessor;
 
 import std.algorithm;
+import std.array;
 import std.exception;
 import std.string;
 
@@ -27,10 +28,12 @@ class Font {
     enforce(error == 0, "Failed to set font size");
   }
 
+  /// Find glyph by character.
   ref immutable(Glyph) findGlyph(dchar code) {
     return findGlyph(FT_Get_Char_Index(_face, code));
   }
 
+  /// Find glyph by it's index in the font.
   ref immutable(Glyph) findGlyph(uint index) {
     if (index >= _glyphs.length) {
       bakeGlyphs(index);
@@ -42,6 +45,14 @@ class Font {
   @property
   uint numGlyphs() {
     return _face.num_glyphs;
+  }
+
+  /// Get kerning of two glyps.
+  int[2] kerning(ref const Glyph left, ref const Glyph right) {
+    FT_Vector delta;
+    FT_Get_Kerning(_face, left.index, right.index, FT_Kerning_Mode.FT_KERNING_DEFAULT, &delta);
+
+    return [delta.x >> 6, delta.y >> 6];
   }
 
   private void bakeGlyphs(uint upToIndex) {
@@ -57,14 +68,48 @@ class Font {
   private Glyph[] _glyphs;
 }
 
+void text(string input, Font font) {
+  if (input.empty) { return; }
+
+  double x = 0.0;
+  double y = 0.0;
+
+  auto chars     = chars(input);
+  auto firstChar = chars.popAndReturnFront();
+
+  Glyph previous = font.findGlyph(firstChar);
+
+  renderGlyph(previous, x, y);
+
+  x += previous.advanceX;
+  y += previous.advanceY;
+
+  foreach (c; chars) {
+    auto current = font.findGlyph(c);
+    auto kerning = font.kerning(previous, current);
+
+    x += kerning[0];
+    y += kerning[1];
+
+    renderGlyph(current, x, y);
+
+    x += current.advanceX;
+    y += current.advanceY;
+
+    previous = current;
+  }
+}
+
 struct Glyph {
   mixin(getter!(int, "advanceX", "advanceY"));
-  mixin(getter!(uint, "width", "height"));
+  mixin(getter!(uint, "textureWidth", "textureHeight"));
 
   mixin(getter!(int, "left", "bottom"));
 
-  @property int right() const { return left + width; }
-  @property int top() const   { return bottom + height; }
+  @property int right() const { return left + textureWidth; }
+  @property int top() const   { return bottom + textureHeight; }
+
+  mixin(getter!(uint, "index"));
 
   private void bake(FT_Face face, uint index) {
     FT_Error error;
@@ -76,21 +121,23 @@ struct Glyph {
 
     ubyte[] data;
 
-    prepareBitmap(glyph.bitmap, _width, _height, data);
+    prepareBitmap(glyph.bitmap, _textureWidth, _textureHeight, data);
 
     glGenTextures(1, &_textureId);
 
     bindTexture();
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureWidth, textureHeight, 0, GL_ALPHA,
                  GL_UNSIGNED_BYTE, cast(void*) data.ptr);
 
     _advanceX = glyph.advance.x / 64;
     _advanceY = glyph.advance.y / 64;
 
-    _left     = glyph.bitmap_left;
-    _bottom   = glyph.bitmap_top - glyph.bitmap.rows;
+    _left   = glyph.bitmap_left;
+    _bottom = glyph.bitmap_top - glyph.bitmap.rows;
+
+    _index = index;
   }
 
   private void bindTexture() const {
@@ -99,20 +146,6 @@ struct Glyph {
   }
 
   private uint _textureId;
-}
-
-void text(string input, Font font) {
-  double x = 0.0;
-  double y = 0.0;
-
-  foreach (c; chars(input)) {
-    auto g = font.findGlyph(c);
-
-    renderGlyph(g, x, y);
-
-    x += g.advanceX;
-    y += g.advanceY;
-  }
 }
 
 private void renderGlyph(ref const Glyph g, double x, double y) {
