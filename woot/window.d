@@ -3,11 +3,12 @@ module woot.window;
 import meta.accessor;
 import std.algorithm;
 import std.math : round;
+
 import woot.application;
 import woot.color;
 import woot.event;
-import woot.graphics.setup;
 import woot.layout.container;
+import woot.opengl;
 import woot.widget;
 
 static import woot.backend;
@@ -20,8 +21,13 @@ class Window : Container {
     resized.connect(&setProjection);
 
     glShadeModel(GL_SMOOTH);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (glBlendEquationSeparate) {
+      glBlendEquationSeparate(GL_FUNC_ADD, GL_MAX);
+    }
 
     backgroundColor = white;
   }

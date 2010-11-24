@@ -1,9 +1,11 @@
 module woot.widget;
 
 import meta.accessor;
+
+import woot.init;
 import woot.color;
 import woot.event;
-import woot.graphics.setup;
+import woot.opengl;
 
 class Widget {
   mixin(event!("paintRequested"));

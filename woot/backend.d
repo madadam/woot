@@ -5,7 +5,7 @@ module woot.backend;
 version(linux) { version = x11; }
 
 version(x11) {
-  public import woot.x11.backend;
+  public import woot.backends.x11;
 
   // TODO: support macos, win32, ios, android, ...
 

@@ -1,7 +1,8 @@
 module woot.application;
 
 import std.algorithm;
-static import backend = woot.backend;
+
+import woot.init;
 import woot.window;
 
 // Run the application. This will spin the main event loop.

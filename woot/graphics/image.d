@@ -1,10 +1,16 @@
 module woot.graphics.image;
 
+import derelict.devil.il;
+import derelict.devil.ilu;
+import derelict.devil.ilut;
+
 import meta.accessor;
 import std.exception;
 import std.file;
 import std.string;
-public import woot.graphics.setup;
+
+import woot.init;
+import woot.opengl;
 
 /// Exception thrown when file is not found.
 class FileNotFound : FileException {
@@ -75,4 +81,14 @@ void image(Image source, double width, double height) {
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
+}
+
+static this() {
+  DerelictIL.load();
+  DerelictILU.load();
+  DerelictILUT.load();
+
+  ilInit();
+  iluInit();
+  ilutRenderer(ILUT_OPENGL);
 }
